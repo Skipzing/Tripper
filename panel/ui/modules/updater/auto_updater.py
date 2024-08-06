@@ -38,7 +38,7 @@ class AutoUpdater:
                     "AN UPDATE IS AVAILABLE! Please update the program to the latest version by downloading it from the github page."
                 )
                 webbrowser.open(
-                    "https://github.com/Pirate-Devs/Kematian/releases/download/AutoBuild/main.exe",
+                    "https://github.com/Skipzing/Tripper/releases/download/AutoBuild/main.exe",
                     1,
                 )
                 input("Press enter to exit...")
