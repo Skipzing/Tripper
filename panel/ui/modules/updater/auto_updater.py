@@ -9,7 +9,7 @@ import requests
 
 class AutoUpdater:
     def __init__(self) -> None:
-        self.github_url = "https://github.com/Pirate-Devs/Kematian/releases/download/AutoBuild/main.exe"
+        self.github_url = "https://github.com/Skipzing/Tripper/releases/download/AutoBuild/main.exe"
         self.current_file = sys.argv[0]
 
     def get_current_file_bytes(self) -> bytes:

